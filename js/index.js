@@ -42,7 +42,7 @@ class ImageDispose {
     getColorData() {
         const img = this.ctx.getImageData(0, 0,  this.canvas.width, this.canvas.height)
         const imgData = img.data
-        for (var i = 0; i < imgData.length; i += 4) {
+        for (let i = 0; i < imgData.length; i += 4) {
             imgData[i] = 255
         }
         this.ctx.putImageData(img, 0, 0)

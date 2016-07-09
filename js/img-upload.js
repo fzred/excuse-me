@@ -18,7 +18,7 @@ class ImgUpload {
     }
 
     setFile(file) {
-        var blobUrl = window.URL.createObjectURL(file)
+        const blobUrl = window.URL.createObjectURL(file)
         const img = new Image()
         img.src = blobUrl
         img.onload = () => {
