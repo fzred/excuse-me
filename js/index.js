@@ -5,7 +5,7 @@ class ImageDispose {
         this.ctx = canvas.getContext("2d")
         this.source = {}
         this.loadResource({
-            testImg: './img/img5.jpg',
+            testImg: './img/testimg.jpg',
             vip: './img/vip8.png',
         }).then(() => {
             this.displayImage(this.source.testImg)
