@@ -40,7 +40,7 @@ class ImageDispose {
     }
 
     getColorData() {
-        const img = this.ctx.getImageData(0, 0,  this.canvas.width, this.canvas.height)
+        const img = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
         const imgData = img.data
         for (let i = 0; i < imgData.length; i += 4) {
             imgData[i] = 255
@@ -52,8 +52,33 @@ class ImageDispose {
         this.ctx.drawImage(this.source.vip, 0, 0);
     }
 
-    setImg(img) {
-        this.displayImage(img)
+    setImg({ file, img, isGif }) {
+        console.log('isGif', isGif)
+        if (isGif) {
+            document.querySelector('.gif-container').innerHTML = ''
+            var reader = new FileReader;
+            reader.onload = function (e) {
+                gifDecode(this.result, document.querySelector('.gif-container'))
+                setTimeout(function () {
+                    var gif = new GIF({
+                        workers: 2,
+                        quality: 10
+                    })
+                    Array.prototype.forEach.call(document.querySelectorAll('.gif-container canvas'), item => {
+                        gif.addFrame(item, {delay: 200})
+
+                    })
+                    gif.on('finished', function(blob) {
+                        window.open(URL.createObjectURL(blob));
+                    })
+                    gif.render()
+
+                }, 1000)
+            }
+            reader.readAsArrayBuffer(file)
+        } else {
+            this.displayImage(img)
+        }
     }
 }
 const imageDispose = new ImageDispose({
