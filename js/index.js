@@ -62,14 +62,17 @@ class ImageDispose {
                 setTimeout(function () {
                     var gif = new GIF({
                         workers: 2,
+                        workerScript:'js/lib/gif.worker.js',
                         quality: 10
                     })
                     Array.prototype.forEach.call(document.querySelectorAll('.gif-container canvas'), item => {
-                        gif.addFrame(item, {delay: 200})
-
+                        gif.addFrame(item, {
+                            delay: 200,
+                            copy: true
+                        })
                     })
-                    gif.on('finished', function(blob) {
-                        window.open(URL.createObjectURL(blob));
+                    gif.on('finished', function (blob) {
+                        window.open(URL.createObjectURL(blob))
                     })
                     gif.render()
 
