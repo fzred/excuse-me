@@ -1,11 +1,9 @@
 class ImageDispose {
-    constructor({ canvas, originalImg }) {
-        this.originalImg = originalImg
-        this.canvas = canvas
-        this.ctx = canvas.getContext("2d")
+    constructor() {
+        this.canvas = document.createElement('canvas')
+        this.ctx = this.canvas.getContext("2d")
         this.source = {}
         this.loadResource({
-            testImg: './img/testimg.jpg',
             vip: './img/vip8.png',
         }).then(() => {
             this.displayImage(this.source.testImg)
@@ -13,7 +11,6 @@ class ImageDispose {
     }
 
     displayImage(img) {
-        this.originalImg.src = img.src
         this.canvas.width = img.width
         this.canvas.height = img.height
         this.ctx.drawImage(img, 0, 0)
@@ -55,15 +52,48 @@ class ImageDispose {
     setImg({ file, img, isGif }) {
         console.log('isGif', isGif)
         if (isGif) {
-            gifDecode(file).then(canvasData => {
+            document.querySelector('.gif-container').innerHTML = ''
+            var reader = new FileReader;
+            reader.onload = function (e) {
+                debugger
+                gifDecode(this.result, document.querySelector('.gif-container'))
+                setTimeout(function () {
+                    var gif = new GIF({
+                        workers: 2,
+                        workerScript: 'js/lib/gif.worker.js',
+                        quality: 10
+                    })
+                    Array.prototype.forEach.call(document.querySelectorAll('.gif-container canvas'), item => {
+                        gif.addFrame(item, {
+                            delay: 200,
+                            copy: true
+                        })
+                    })
+                    gif.on('finished', function (blob) {
+                        window.open(URL.createObjectURL(blob))
+                    })
+                    gif.render()
+
+                }, 1000)
+            }
+            reader.readAsArrayBuffer(file)
+        } else {
+            this.displayImage(img)
+        }
+    }
+
+    setFile({ file, isGif }) {
+        if (isGif) {
+            gifDecode(file, document.querySelector('.gif-container'))
+            setTimeout(function () {
                 var gif = new GIF({
                     workers: 2,
                     workerScript: 'js/lib/gif.worker.js',
                     quality: 10
                 })
-                canvasData.forEach(item => {
-                    gif.addFrame(item.canvas, {
-                        delay: item.delay,
+                Array.prototype.forEach.call(document.querySelectorAll('.gif-container canvas'), item => {
+                    gif.addFrame(item, {
+                        delay: 200,
                         copy: true
                     })
                 })
@@ -71,15 +101,7 @@ class ImageDispose {
                     window.open(URL.createObjectURL(blob))
                 })
                 gif.render()
-            })
-        }
-        else {
-            this.displayImage(img)
+            }, 1000)
         }
     }
 }
-
-const imageDispose = new ImageDispose({
-    canvas: document.getElementById("myCanvas"),
-    originalImg: document.getElementById("myPhoto"),
-})

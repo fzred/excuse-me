@@ -64,8 +64,8 @@ const gifDecode = (() => {
         }
     }
 
-    return (file, container) => {
-        var view = new Uint8Array(file),
+    function dispose(arrayBuffer) {
+        var view = new Uint8Array(arrayBuffer),
             offset = 0,
             lastDisp = -1,
             lastCans = null,
@@ -144,7 +144,7 @@ const gifDecode = (() => {
 
                     break
                 case 59:
-                    console.log('The end.', offset, file.byteLength)
+                    console.log('The end.', offset, arrayBuffer.byteLength)
                     break
                 default:
                     console.log(arr)
@@ -217,45 +217,62 @@ const gifDecode = (() => {
 
         getHeader()
         getScrDesc()
-        window.gif = info
-        info.frames.forEach(function (e, i) {
-            var canvas = document.createElement('canvas'),
-                ctx = canvas.getContext('2d')
+        return new Promise(resolve => {
+            const canvasData = []
+            info.frames.forEach(function (e, i) {
+                var canvas = document.createElement('canvas'),
+                    ctx = canvas.getContext('2d')
 
 
-            e.img.m ? tab = e.img.colorTab : tab = info.colorTab
-            canvas.width = info.w
-            canvas.height = info.h
-//            container.insertBefore(canvas, el);
-            container.appendChild(canvas)
-            imgData = ctx.getImageData(e.img.x, e.img.y, e.img.w, e.img.h)
+                e.img.m ? tab = e.img.colorTab : tab = info.colorTab
+                canvas.width = info.w
+                canvas.height = info.h
+                imgData = ctx.getImageData(e.img.x, e.img.y, e.img.w, e.img.h)
+                lzw(e.img.srcBuf, e.img.codeSize).decode().forEach(function (j, k) {
+                    imgData.data[k * 4] = tab[j * 3]
+                    imgData.data[k * 4 + 1] = tab[j * 3 + 1]
+                    imgData.data[k * 4 + 2] = tab[j * 3 + 2]
+                    imgData.data[k * 4 + 3] = 255
+                    e.ctrl.t ? (j == e.ctrl.tranIndex ? imgData.data[k * 4 + 3] = 0 : 0) : 0
+                })
+                ctx.putImageData(imgData, e.img.x, e.img.y, 0, 0, e.img.w, e.img.h)
+                imgData = ctx.getImageData(0, 0, info.w, info.h)
 
-            lzw(e.img.srcBuf, e.img.codeSize).decode().forEach(function (j, k) {
-                imgData.data[k * 4] = tab[j * 3]
-                imgData.data[k * 4 + 1] = tab[j * 3 + 1]
-                imgData.data[k * 4 + 2] = tab[j * 3 + 2]
-                imgData.data[k * 4 + 3] = 255
-                e.ctrl.t ? (j == e.ctrl.tranIndex ? imgData.data[k * 4 + 3] = 0 : 0) : 0
-            })
-            ctx.putImageData(imgData, e.img.x, e.img.y, 0, 0, e.img.w, e.img.h)
-            imgData = ctx.getImageData(0, 0, info.w, info.h)
-
-            if (lastCans) {
-                var lastData = lastCans.getContext('2d').getImageData(0, 0, info.w, info.h)
-                for (var i = 0; i < imgData.data.length; i += 4) {
-                    if (imgData.data[i + 3] == 0) {
-                        imgData.data[i] = lastData.data[i]
-                        imgData.data[i + 1] = lastData.data[i + 1]
-                        imgData.data[i + 2] = lastData.data[i + 2]
-                        imgData.data[i + 3] = lastData.data[i + 3]
+                if (lastCans) {
+                    var lastData = lastCans.getContext('2d').getImageData(0, 0, info.w, info.h)
+                    for (var i = 0; i < imgData.data.length; i += 4) {
+                        if (imgData.data[i + 3] == 0) {
+                            imgData.data[i] = lastData.data[i]
+                            imgData.data[i + 1] = lastData.data[i + 1]
+                            imgData.data[i + 2] = lastData.data[i + 2]
+                            imgData.data[i + 3] = lastData.data[i + 3]
+                        }
                     }
+                    ctx.putImageData(imgData, 0, 0)
                 }
-                ctx.putImageData(imgData, 0, 0)
+                lastDisp = e.ctrl.disp
+                if (e.ctrl.disp === 1 || e.ctrl.disp === 0) {
+                    lastCans = canvas
+                }
+
+                canvasData.push({
+                    delay: e.ctrl.delay,
+                    canvas
+                })
+            })
+
+            resolve(canvasData)
+        })
+
+    }
+
+    return (file) => {
+        return new Promise(resolve => {
+            var reader = new FileReader
+            reader.onload = function (e) {
+                resolve(dispose(this.result))
             }
-            lastDisp = e.ctrl.disp
-            if (e.ctrl.disp === 1 || e.ctrl.disp === 0) {
-                lastCans = canvas
-            }
+            reader.readAsArrayBuffer(file)
         })
     }
 })()
