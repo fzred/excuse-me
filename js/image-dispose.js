@@ -1,12 +1,10 @@
+const _imgSource = {}
 class ImageDispose {
-    constructor() {
-        this.canvas = document.createElement('canvas')
+    constructor(canvas = document.createElement('canvas')) {
+        this.canvas = canvas
         this.ctx = this.canvas.getContext("2d")
-        this.source = {}
         this.loadResource({
             vip: './img/vip8.png',
-        }).then(() => {
-            this.displayImage(this.source.testImg)
         })
     }
 
@@ -14,8 +12,16 @@ class ImageDispose {
         this.canvas.width = img.width
         this.canvas.height = img.height
         this.ctx.drawImage(img, 0, 0)
+        this.draw()
+    }
+
+    draw() {
         this.getColorData()
         this.drawIcon()
+    }
+
+    getDataURL() {
+        return this.canvas.toDataURL("image/png")
     }
 
     loadResource(sourceSrc) {
@@ -27,7 +33,7 @@ class ImageDispose {
 
                 img.onload = () => {
                     loaded++
-                    this.source[key] = img
+                    _imgSource[key] = img
                     if (loaded === keys.length) resolve()
                 }
                 img.src = sourceSrc[key]
@@ -40,16 +46,16 @@ class ImageDispose {
         const img = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
         const imgData = img.data
         for (let i = 0; i < imgData.length; i += 4) {
-            imgData[i] = 255
+            imgData[i] = 250
         }
         this.ctx.putImageData(img, 0, 0)
     }
 
     drawIcon() {
-        this.ctx.drawImage(this.source.vip, 0, 0);
+        this.ctx.drawImage(_imgSource.vip, 0, 0);
     }
 
-    generateImg({ file, img, isGif }) {
+    generateImgSrc({ file, img, isGif }) {
         return new Promise(resolve => {
             if (isGif) {
                 gifDecode(file).then(canvasData => {
@@ -59,6 +65,9 @@ class ImageDispose {
                         quality: 10
                     })
                     canvasData.forEach(item => {
+                        const imgd = new ImageDispose(item.canvas)
+                        imgd.draw()
+
                         gif.addFrame(item.canvas, {
                             delay: item.delay,
                             copy: true
@@ -72,7 +81,7 @@ class ImageDispose {
             }
             else {
                 this.displayImage(img)
-                resolve(this.canvas.toDataURL("image/png"))
+                resolve(this.getDataURL())
             }
         })
     }
