@@ -1,11 +1,8 @@
-const _imgSource = {}
 class ImageDispose {
-    constructor(canvas = document.createElement('canvas')) {
+    constructor({ iconImg, canvas = document.createElement('canvas') }) {
         this.canvas = canvas
         this.ctx = this.canvas.getContext("2d")
-        this.loadResource({
-            vip: './img/vip8.png',
-        })
+        this.iconImg = iconImg
     }
 
     displayImage(img) {
@@ -24,24 +21,6 @@ class ImageDispose {
         return this.canvas.toDataURL("image/png")
     }
 
-    loadResource(sourceSrc) {
-        return new Promise(resolve => {
-            let loaded = 0
-            const keys = Object.keys(sourceSrc)
-            keys.forEach(key => {
-                const img = new Image()
-
-                img.onload = () => {
-                    loaded++
-                    _imgSource[key] = img
-                    if (loaded === keys.length) resolve()
-                }
-                img.src = sourceSrc[key]
-            })
-
-        })
-    }
-
     getColorData() {
         const img = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
         const imgData = img.data
@@ -52,6 +31,6 @@ class ImageDispose {
     }
 
     drawIcon() {
-        this.ctx.drawImage(_imgSource.vip, 0, 0);
+        this.ctx.drawImage(this.iconImg, 0, 0);
     }
 }
