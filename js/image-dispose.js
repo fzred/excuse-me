@@ -54,35 +54,4 @@ class ImageDispose {
     drawIcon() {
         this.ctx.drawImage(_imgSource.vip, 0, 0);
     }
-
-    generateImgSrc({ file, img, isGif }) {
-        return new Promise(resolve => {
-            if (isGif) {
-                gifDecode(file).then(canvasData => {
-                    var gif = new GIF({
-                        workers: 2,
-                        workerScript: 'js/lib/gif.worker.js',
-                        quality: 10
-                    })
-                    canvasData.forEach(item => {
-                        const imgd = new ImageDispose(item.canvas)
-                        imgd.draw()
-
-                        gif.addFrame(item.canvas, {
-                            delay: item.delay,
-                            copy: true
-                        })
-                    })
-                    gif.on('finished', function (blob) {
-                        resolve(window.URL.createObjectURL(blob))
-                    })
-                    gif.render()
-                })
-            }
-            else {
-                this.displayImage(img)
-                resolve(this.getDataURL())
-            }
-        })
-    }
 }
